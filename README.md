@@ -65,41 +65,9 @@ processor.on("error", (err) => {
   console.log("Error Has Occurred: %j", err);
 });
 
-
+//start the queue processor
 processor.start();
 
-
-
-// Example of all the available options to pass to the Queue Processor
-const fullOptionsExample = {
-  // REQUIRED: sqs queue endpoint url
-  queueUrl: "https://sqs.us-east-1.amazonaws.com/12345678910/MyQueueUrl",
-  // OPTIONAL: default region
-  awsRegion: "us-east-1",
-  // OPTIONAL: if awsAccessKeyId and awsSecretAccessKey are not supplied IAM role / credentials file is used
-  awsAccessKeyId: null,
-  awsSecretAccessKey: null,
-
-  // OPTIONAL: parameters to add to the sqs.receiveMessage call
-  sqsReceiveSettings: {
-    // The maximum number of messages to return. Amazon SQS never returns more messages
-    // than this value (however, fewer messages might be returned). Valid values are 1 to 10.
-    MaxNumberOfMessages: 10,
-    // The duration (in seconds) that the received messages are hidden from subsequent
-    // retrieve requests after being retrieved by a ReceiveMessage request.
-    VisibilityTimeout: 30,
-    // The duration (in seconds) for which the call waits for a message to arrive in
-    // the queue before returning. If a message is available, the call returns sooner than
-    WaitTimeSeconds: 20,
-    // (Array<String>) List of message attribute names to retrieve
-    MessageAttributeNames: null,
-    // (Array<String>) A list of attributes that need to be returned along with each message.
-    AttributeNames: null
-  },
-  // OPTIONAL: Function onMessageParse(message) to parse an SQS message before
-  // sending to "message" event. Ideal for doing JSON.parse on the message.Body for example.
-  onMessageParse: null
-};
 
 ```
 
@@ -122,7 +90,7 @@ Stop polling for new message
 
 ```js
 // Example of all the available options to pass to the Queue Processor
-const fullOptionsExample = {
+const options = {
   // REQUIRED: sqs queue endpoint url
   queueUrl: "https://sqs.us-east-1.amazonaws.com/12345678910/MyQueueUrl",
   // OPTIONAL: default region
