@@ -1,6 +1,6 @@
 {
   "name": "sqs-queue-processor",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Simple AWS SQS Queue processing library.",
   "main": "index.js",
   "scripts": {
