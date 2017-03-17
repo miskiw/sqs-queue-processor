@@ -1,0 +1,35 @@
+{
+  "name": "sqs-queue-processor",
+  "version": "0.0.1",
+  "description": "Simple AWS SQS Queue processing library.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/* -R spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://miskiw@github.com/miskiw/sqs-queue-processor.git"
+  },
+  "keywords": [
+    "sqs",
+    "queue",
+    "processor",
+    "aws"
+  ],
+  "author": "Mike Iskiw",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/miskiw/sqs-queue-processor/issues"
+  },
+  "homepage": "https://github.com/miskiw/sqs-queue-processor",
+  "dependencies": {
+    "async": "^2.1.5",
+    "aws-sdk": "^2.28.0"
+  },
+  "engines": {
+    "node": ">=4.1.0"
+  },
+  "devDependencies": {
+    "mocha": "^3.2.0"
+  }
+}
