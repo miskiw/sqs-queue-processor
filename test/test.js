@@ -1,7 +1,10 @@
 "use strict";
 
 const QueueProcessor = require("..");
-const { describe, beforeEach, it } = require("mocha");
+const describe = require("mocha").describe;
+const beforeEach = require("mocha").beforeEach;
+const it = require("mocha").it;
+
 const assert = require("assert");
 const sinon = require("sinon");
 const should = require("should");
