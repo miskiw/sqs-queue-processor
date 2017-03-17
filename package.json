@@ -4,7 +4,8 @@
   "description": "Simple AWS SQS Queue processing library.",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test/* -R spec"
+    "test": "mocha test/* -R spec",
+    "coverage": "istanbul cover node_modules/mocha/bin/_mocha test/*"
   },
   "repository": {
     "type": "git",
@@ -30,6 +31,9 @@
     "node": ">=4.1.0"
   },
   "devDependencies": {
-    "mocha": "^3.2.0"
+    "istanbul": "^0.4.5",
+    "mocha": "^3.2.0",
+    "should": "^11.2.1",
+    "sinon": "^2.0.0"
   }
 }

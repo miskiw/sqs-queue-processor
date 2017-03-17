@@ -1,85 +1,204 @@
 "use strict";
 
-const QueueProcessor = require("../index");
+const QueueProcessor = require("..");
+const { describe, beforeEach, it } = require("mocha");
+const assert = require("assert");
+const sinon = require("sinon");
+const should = require("should");
 
-const options = {
-  // sqs queue endpoint url
-  queueUrl: null,
-  // default region
-  awsRegion: "us-east-1",
-  // if awsAccessKeyId and awsSecretAccessKey are not supplied IAM role / credentials file is used
-  awsAccessKeyId: null,
-  awsSecretAccessKey: null,
+describe("Queue Processor", () => {
+  let queueProcessor;
+  let sqs;
+  const response = {
+    Messages: [{
+      ReceiptHandle: `receipt-handle-${new Date().getTime()}`,
+      MessageId: new Date().getTime().toString(),
+      Body: "{\"message\": \"Message Body\"}"
+    }]
+  };
 
-  // parameters to add to the sqs.receiveMessage call
-  sqsReceiveSettings: {
-    // The maximum number of messages to return. Amazon SQS never returns more messages
-    // than this value (however, fewer messages might be returned). Valid values are 1 to 10.
-    MaxNumberOfMessages: 10,
-    // The duration (in seconds) that the received messages are hidden from subsequent
-    // retrieve requests after being retrieved by a ReceiveMessage request.
-    VisibilityTimeout: 30,
-    // The duration (in seconds) for which the call waits for a message to arrive in
-    // the queue before returning. If a message is available, the call returns sooner than
-    WaitTimeSeconds: 20,
-    // (Array<String>) List of message attribute names to retrieve
-    MessageAttributeNames: null,
-    // (Array<String>) A list of attributes that need to be returned along with each message.
-    AttributeNames: null
-  },
-  // optional Function onMessageParse(message) to parse an SQS message before
-  // sending to "message" event
-  onMessageParse: null
-};
+  beforeEach(() => {
+    sqs = sinon.mock();
+    sqs.receiveMessage = sinon.stub().yieldsAsync(null, response);
+    sqs.receiveMessage.onSecondCall().returns();
+    sqs.deleteMessageBatch = sinon.stub().yieldsAsync(null);
+    sqs._deleteMessageBatch = sinon.stub().yieldsAsync(null);
+    queueProcessor = new QueueProcessor({
+      queueUrl: "http://sqs.something.com",
+      sqs
+    });
+  });
+
+  it("requires a queueUrl to be set", () => {
+    assert.throws(() => {
+      new QueueProcessor({});
+    });
+  });
+
+  it("requires a region to be set", () => {
+    assert.throws(() => {
+      new QueueProcessor({ queueUrl: "testurl", awsRegion: null });
+    });
+  });
+
+  it("test aws access key configuration", () => {
+    const accessKey = "accessKey";
+    const secretKey = "secretKey";
+    const processor = new QueueProcessor({ queueUrl: "testurl", awsRegion: "us-east-1", awsAccessKeyId: accessKey, awsSecretAccessKey: secretKey });
+
+    processor.should.have.property("options");
+    processor.options.should.have.property("awsAccessKeyId").eql(accessKey);
+    processor.options.should.have.property("awsSecretAccessKey").eql(secretKey);
+  });
+
+  it("requires a WaitTimeSeconds between 0 - 20", () => {
+    assert.throws(() => {
+      new QueueProcessor({
+        queueUrl: "testurl",
+        sqsReceiveSettings: {
+          WaitTimeSeconds: 21,
+        },
+      });
+    });
+  });
+
+  it("requires a MaxNumberOfMessages between 1-10 - upper", () => {
+    assert.throws(() => {
+      new QueueProcessor({
+        queueUrl: "testurl",
+        sqsReceiveSettings: {
+          MaxNumberOfMessages: 11
+        },
+      });
+    });
+  });
+
+  it("requires a MaxNumberOfMessages between 1-10 - lower", () => {
+    assert.throws(() => {
+      new QueueProcessor({
+        queueUrl: "testurl",
+        sqsReceiveSettings: {
+          MaxNumberOfMessages: 0
+        },
+      });
+    });
+  });
+
+  describe("Create", () => {
+    it("creates a new instance of a QueueProcessor object", () => {
+      const processor = new QueueProcessor({
+        queueUrl: "some-queue-url"
+      });
+
+      assert(processor instanceof QueueProcessor);
+    });
+  });
+
+  describe("Events", () => {
+    it("fire start event", (done) => {
+      queueProcessor.on("start", () => {
+        done();
+      });
+
+      queueProcessor.start();
+    });
+
+    it("fire stopped event", (done) => {
+      queueProcessor.on("stopped", () => {
+        done();
+      });
+
+      queueProcessor.start();
+      queueProcessor.stop();
+    });
+
+    it("SQS receives an error", (done) => {
+      const receiveErr = new Error("Receive error");
+
+      sqs.receiveMessage.yields(receiveErr);
+
+      queueProcessor.on("error", (err) => {
+        should.exist(err);
+        err.should.eql(receiveErr);
+
+        done();
+      });
+
+      queueProcessor.start();
+    });
+
+    it("fire message event", (done) => {
+      queueProcessor.on("message", (msg) => {
+        msg.should.have.property("Body");
+        done();
+      });
+
+      queueProcessor.start();
+    });
+
+    it("fire before_poll event", (done) => {
+      queueProcessor.on("before_poll", () => {
+        queueProcessor.stop();
+        done();
+      });
+
+      queueProcessor.start();
+    });
+
+    it("fire after_poll event", (done) => {
+      let tester = false;
+      queueProcessor.on("before_poll", () => {
+        tester = true;
+      });
+
+      queueProcessor.on("after_poll", () => {
+        tester.should.eql(true);
+        queueProcessor.stop();
+        done();
+      });
+
+      queueProcessor.start();
+    });
+
+    it("fire messages_received_count event", (done) => {
+      queueProcessor.on("messages_received_count", (count) => {
+        count.should.eql(1);
+        done();
+      });
+
+      queueProcessor.start();
+    });
+
+    it("fire messages_deleted event", (done) => {
+      queueProcessor.on("messages_deleted", (data) => {
+        done();
+      });
+
+      queueProcessor.start();
+    });
+
+    it("fire message event", (done) => {
+      queueProcessor = new QueueProcessor({
+        queueUrl: "http://sqs.something.com",
+        sqs,
+        onMessageParse(message) {
+          message.JSONBody = JSON.parse(message.Body);
+          return message;
+        }
+      });
 
 
-const processor = new QueueProcessor(options);
+      queueProcessor.on("message", (msg) => {
+        msg.should.have.property("Body");
+        msg.should.have.property("JSONBody");
+        (typeof msg.JSONBody).should.eql("object");
+        msg.JSONBody.should.have.property("message").eql("Message Body");
 
-// Event Fired on each message received
-processor.on("message", (msg) => {
-  // single SQS Message object
-  console.log(msg.Body);
+
+        done();
+      });
+
+      queueProcessor.start();
+    });
+  });
 });
-
-// Event fired when polling starts
-processor.on("start", () => {
-  console.log("Polling STARTED");
-});
-
-// Event fired when polling is halted
-processor.on("stopped", () => {
-  console.log("Polling has been stopped... lets wait 5 seconds");
-
-  setTimeout(() => {
-    // start the polling requests up again
-    processor.start();
-  }, 5000);
-});
-
-// Event fired before each polling request to SQS
-processor.on("before_poll", () => {
-  console.log("Polling for new data: ", new Date());
-});
-
-// Event fired on the completion of each polling response from SQS
-processor.on("after_poll", () => {
-  console.log("poll operation completed");
-
-  // we can build custom logic to determine if we need to continue to poll
-  // or stop the polling operation for a bit.
-  processor.stop();
-});
-
-// Event fired with the number of messages received on last poll request (max 10)
-// good event to keep a running total of messages processed
-processor.on("messages_received_count", (count) => {
-  console.log(`Total Messages Received on last poll: ${count}`);
-});
-
-// Event fired when an error occurs in the processor
-processor.on("error", (err) => {
-  console.log("Error Has Occurred: %j", err);
-});
-
-
-processor.start();

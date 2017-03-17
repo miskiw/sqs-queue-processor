@@ -1,5 +1,5 @@
 # sqs-queue-processor
-Event based SQS Queue processor. This library allows you to easily control the flow of data out of your SQS Queues based on your expected requirements. Will perform 'Long Polling' on the SQS queue.
+Event based AWS SQS (Simple Queue Service) Queue processor. This library allows you to easily control the flow of data out of your SQS queues based on your expected requirements. Will perform 'Long Polling' on the SQS queue by default.
 
 ## Installation
 
@@ -87,6 +87,8 @@ Stop polling for new message
 
 
 ## Options
+
+Example of the available options on Object creation.
 
 ```js
 // Example of all the available options to pass to the Queue Processor
