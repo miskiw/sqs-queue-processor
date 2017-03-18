@@ -1,6 +1,6 @@
 {
   "name": "sqs-queue-processor",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "Simple AWS SQS Queue processing library.",
   "main": "index.js",
   "scripts": {
@@ -31,6 +31,9 @@
     "node": ">=4.1.0"
   },
   "devDependencies": {
+    "eslint": "^3.18.0",
+    "eslint-config-airbnb-base": "^11.1.1",
+    "eslint-plugin-import": "^2.2.0",
     "istanbul": "^0.4.5",
     "mocha": "^3.2.0",
     "should": "^11.2.1",

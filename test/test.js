@@ -16,8 +16,8 @@ describe("Queue Processor", () => {
     Messages: [{
       ReceiptHandle: `receipt-handle-${new Date().getTime()}`,
       MessageId: new Date().getTime().toString(),
-      Body: "{\"message\": \"Message Body\"}"
-    }]
+      Body: "{\"message\": \"Message Body\"}",
+    }],
   };
 
   beforeEach(() => {
@@ -28,7 +28,7 @@ describe("Queue Processor", () => {
     sqs._deleteMessageBatch = sinon.stub().yieldsAsync(null);
     queueProcessor = new QueueProcessor({
       queueUrl: "http://sqs.something.com",
-      sqs
+      sqs,
     });
   });
 
@@ -70,7 +70,7 @@ describe("Queue Processor", () => {
       new QueueProcessor({
         queueUrl: "testurl",
         sqsReceiveSettings: {
-          MaxNumberOfMessages: 11
+          MaxNumberOfMessages: 11,
         },
       });
     });
@@ -81,7 +81,7 @@ describe("Queue Processor", () => {
       new QueueProcessor({
         queueUrl: "testurl",
         sqsReceiveSettings: {
-          MaxNumberOfMessages: 0
+          MaxNumberOfMessages: 0,
         },
       });
     });
@@ -90,7 +90,7 @@ describe("Queue Processor", () => {
   describe("Create", () => {
     it("creates a new instance of a QueueProcessor object", () => {
       const processor = new QueueProcessor({
-        queueUrl: "some-queue-url"
+        queueUrl: "some-queue-url",
       });
 
       assert(processor instanceof QueueProcessor);
@@ -173,7 +173,7 @@ describe("Queue Processor", () => {
     });
 
     it("fire messages_deleted event", (done) => {
-      queueProcessor.on("messages_deleted", (data) => {
+      queueProcessor.on("messages_deleted", () => {
         done();
       });
 
@@ -187,7 +187,7 @@ describe("Queue Processor", () => {
         onMessageParse(message) {
           message.JSONBody = JSON.parse(message.Body);
           return message;
-        }
+        },
       });
 
 
@@ -202,6 +202,57 @@ describe("Queue Processor", () => {
       });
 
       queueProcessor.start();
+    });
+  });
+
+  describe("Error states", () => {
+    it("delete message error", (done) => {
+      const deleteErr = new Error("Delete error");
+
+      sqs.deleteMessageBatch.yields(deleteErr);
+
+      queueProcessor.on("error", (err) => {
+        should.exist(err);
+        err.should.have.property("message").eql("Delete error");
+        done();
+      });
+
+      queueProcessor.start();
+    });
+
+    it("No Message Result", (done) => {
+      const responseNoMessages = {
+        Messages: [],
+      };
+      sqs.receiveMessage = sinon.stub().yieldsAsync(null, responseNoMessages);
+
+      queueProcessor.on("message", (msg) => {
+        // should not get a response here
+        assert.fail(msg, "null");
+        done();
+      });
+
+      queueProcessor.on("after_poll", () => {
+        queueProcessor.stop();
+        done();
+      });
+
+      queueProcessor.start();
+    });
+
+    it("Call start() multiple times", (done) => {
+      let startEventCounter = 0;
+      queueProcessor.on("start", (err) => {
+        startEventCounter += 1;
+      });
+      queueProcessor.on("stopped", (err) => {
+        startEventCounter.should.eql(1);
+        done();
+      });
+
+      queueProcessor.start();
+      queueProcessor.start();
+      queueProcessor.stop();
     });
   });
 });

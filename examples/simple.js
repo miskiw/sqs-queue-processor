@@ -25,11 +25,11 @@ const options = {
     // (Array<String>) List of message attribute names to retrieve
     MessageAttributeNames: null,
     // (Array<String>) A list of attributes that need to be returned along with each message.
-    AttributeNames: null
+    AttributeNames: null,
   },
   // optional Function onMessageParse(message) to parse an SQS message before
   // sending to "message" event
-  onMessageParse: null
+  onMessageParse: null,
 };
 
 
