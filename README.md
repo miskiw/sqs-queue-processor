@@ -14,7 +14,9 @@ const QueueProcessor = require('sqs-queue-processor');
 
 const options = {
   // REQUIRED: sqs queue endpoint url
-  queueUrl: "https://sqs.us-east-1.amazonaws.com/12345678910/MyQueueUrl"
+  queueUrl: "https://sqs.us-east-1.amazonaws.com/12345678910/MyQueueUrl",
+  // can be left blank. Default is "us-east-1" 
+  awsRegion: "us-east-1"
 };
 
 const processor = new QueueProcessor(options);
@@ -69,6 +71,27 @@ processor.on("error", (err) => {
 processor.start();
 
 
+```
+
+### Credentials
+
+It is recommended to specify AWS token credentials [based on aws best practices](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html#Setting_AWS_Credentials). In production it is recommended to use [IAM Roles](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html). If that is not possible the next best option would be environment variables or a local ~/.aws/credentials file.
+
+
+#### Environment Variables Example
+
+```bash
+export AWS_ACCESS_KEY_ID=My_Access_Key
+export AWS_SECRET_ACCESS_KEY=My_Secret_Key
+```
+
+#### Credentials File Example
+
+```text
+[default]
+aws_access_key_id = My_Access_Key
+aws_secret_access_key = My_Secret_Key
+region=us-east-1
 ```
 
 ## API
